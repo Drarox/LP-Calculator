@@ -92,26 +92,28 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 
 // Reactive data properties
-const P_current = ref(1.00107);
-const P_lower = ref(1);
-const P_upper = ref(1.0012);
-const totalUSD = ref(1000);
-const priceToken0 = ref(1);
-const priceToken1 = ref(1);
+const P_current = ref<number>(1.00107);
+const P_lower = ref<number>(1);
+const P_upper = ref<number>(1.0012);
+const totalUSD = ref<number>(1000);
+const priceToken0 = ref<number>(1);
+const priceToken1 = ref<number>(1);
+
+interface CalculationParams {
+  P_current: number;
+  P_lower: number;
+  P_upper: number;
+  totalUSD: number;
+  priceToken0: number;
+  priceToken1: number;
+}
 
 // Original calculation logic
-const calculateTokenAmounts = ({
-                                   P_current,
-                                   P_lower,
-                                   P_upper,
-                                   totalUSD,
-                                   priceToken0,
-                                   priceToken1
-                               }) => {
+const calculateTokenAmounts = ({ P_current, P_lower, P_upper, totalUSD, priceToken0, priceToken1 }: CalculationParams): { amount0: number; amount1: number } => {
     if (P_current <= 0 || P_lower <= 0 || P_upper <= 0 || totalUSD <= 0 || priceToken0 <= 0 || priceToken1 <= 0) {
         return { amount0: 0, amount1: 0 };
     }
@@ -166,7 +168,7 @@ const calculatedAmounts = computed(() => {
 });
 
 // Computed property for lower price difference percentage
-const lowerDiffPercentage = computed(() => {
+const lowerDiffPercentage = computed<number | null>(() => {
     if (P_current.value === null || P_current.value === 0 || P_lower.value === null) {
         return null;
     }
@@ -174,7 +176,7 @@ const lowerDiffPercentage = computed(() => {
 });
 
 // Computed property for upper price difference percentage
-const upperDiffPercentage = computed(() => {
+const upperDiffPercentage = computed<number | null>(() => {
     if (P_current.value === null || P_current.value === 0 || P_upper.value === null) {
         return null;
     }
