@@ -1,0 +1,19 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+	<title>download</title>
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(60,60,-60,60,5,35)">
+			<stop offset="0" stop-color="#8b55bf"/>
+			<stop offset="1" stop-color="#60a5fa"/>
+		</linearGradient>
+		<linearGradient id="g2" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-60,60,-60,-60,95,5)">
+			<stop offset="0" stop-color="#6a5fa0"/>
+			<stop offset="1" stop-color="#8b55bf"/>
+		</linearGradient>
+	</defs>
+	<style>
+		.s0 { fill: url(#g1) } 
+		.s1 { fill: url(#g2) } 
+	</style>
+	<path fill-rule="evenodd" class="s0" d="m35 95c-16.6 0-30-13.4-30-30 0-16.6 13.4-30 30-30 16.6 0 30 13.4 30 30 0 16.6-13.4 30-30 30z"/>
+	<path fill-rule="evenodd" class="s1" d="m65 65c-16.6 0-30-13.4-30-30 0-16.6 13.4-30 30-30 16.6 0 30 13.4 30 30 0 16.6-13.4 30-30 30z"/>
+</svg>
