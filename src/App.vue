@@ -1,14 +1,12 @@
 <template>
   <div class="min-h-screen flex flex-col">
-
+    <HeaderView />
     <router-view class="flex-grow"/>
-
-
-    <footer class="text-center text-gray-500 text-sm p-4">
-      <p>&copy; {{ new Date().getFullYear() }} LP Calculator. Created by <a href="https://github.com/Drarox" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300">Drarox</a>.</p>
-    </footer>
+    <FooterView />
   </div>
 </template>
 
 <script setup lang="ts">
+import HeaderView from './components/HeaderView.vue';
+import FooterView from './components/FooterView.vue';
 </script>

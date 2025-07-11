@@ -1,11 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import CalculatorView from '../views/CalculatorView.vue';
+import ConcentratedView from '../views/ConcentratedView.vue';
+import ClassicView from '../views/ClassicView.vue';
 
 const routes = [
   {
     path: '/',
-    name: 'Calculator',
-    component: CalculatorView
+    name: 'Concentrated',
+    component: ConcentratedView
+  },
+  {
+    path: '/classic',
+    name: 'Classic',
+    component: ClassicView
   }
 ];
 

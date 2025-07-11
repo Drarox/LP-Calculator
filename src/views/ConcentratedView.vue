@@ -19,14 +19,14 @@
         <!-- Current Price Input -->
         <div class="input-group">
           <label for="P_current" class="block text-sm font-medium text-gray-300 mb-1">Current Price (Token1 per Token0)</label>
-          <input type="number" id="P_current" v-model.number="P_current" step="any"
+          <input type="number" id="P_current" v-model.number="P_current" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
         <!-- Lower Price Input -->
         <div class="input-group">
           <label for="P_lower" class="block text-sm font-medium text-gray-300 mb-1">Lower Price Bound</label>
-          <input type="number" id="P_lower" v-model.number="P_lower" step="any"
+          <input type="number" id="P_lower" v-model.number="P_lower" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           <p v-if="lowerDiffPercentage !== null"
              :class="{'text-green-400': lowerDiffPercentage >= 0, 'text-red-400': lowerDiffPercentage < 0}"
@@ -38,7 +38,7 @@
         <!-- Upper Price Input -->
         <div class="input-group">
           <label for="P_upper" class="block text-sm font-medium text-gray-300 mb-1">Upper Price Bound</label>
-          <input type="number" id="P_upper" v-model.number="P_upper" step="any"
+          <input type="number" id="P_upper" v-model.number="P_upper" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           <p v-if="upperDiffPercentage !== null"
              :class="{'text-green-400': upperDiffPercentage >= 0, 'text-red-400': upperDiffPercentage < 0}"
@@ -50,14 +50,14 @@
         <!-- Price Token0 Input -->
         <div class="input-group">
           <label for="priceToken0" class="block text-sm font-medium text-gray-300 mb-1">Price of Token0 (in USD)</label>
-          <input type="number" id="priceToken0" v-model.number="priceToken0" step="any"
+          <input type="number" id="priceToken0" v-model.number="priceToken0" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
         <!-- Price Token1 Input -->
         <div class="input-group">
           <label for="priceToken1" class="block text-sm font-medium text-gray-300 mb-1">Price of Token1 (in USD)</label>
-          <input type="number" id="priceToken1" v-model.number="priceToken1" step="any"
+          <input type="number" id="priceToken1" v-model.number="priceToken1" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
       </div>
