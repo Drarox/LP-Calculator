@@ -93,7 +93,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+
+// Helper functions for localStorage
+const loadFromStorage = (key: string, defaultValue: any) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+const saveToStorage = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
 
 // Reactive data properties
 const P_current = ref<number>(1.00107);
@@ -102,6 +120,24 @@ const P_upper = ref<number>(1.0012);
 const totalUSD = ref<number>(1000);
 const priceToken0 = ref<number>(1);
 const priceToken1 = ref<number>(1);
+
+// Load saved values on component mount
+onMounted(() => {
+  P_current.value = loadFromStorage('concentrated-P_current', 1.00107);
+  P_lower.value = loadFromStorage('concentrated-P_lower', 1);
+  P_upper.value = loadFromStorage('concentrated-P_upper', 1.0012);
+  totalUSD.value = loadFromStorage('concentrated-totalUSD', 1000);
+  priceToken0.value = loadFromStorage('concentrated-priceToken0', 1);
+  priceToken1.value = loadFromStorage('concentrated-priceToken1', 1);
+});
+
+// Watch for changes and save to localStorage
+watch(P_current, (newValue) => saveToStorage('concentrated-P_current', newValue));
+watch(P_lower, (newValue) => saveToStorage('concentrated-P_lower', newValue));
+watch(P_upper, (newValue) => saveToStorage('concentrated-P_upper', newValue));
+watch(totalUSD, (newValue) => saveToStorage('concentrated-totalUSD', newValue));
+watch(priceToken0, (newValue) => saveToStorage('concentrated-priceToken0', newValue));
+watch(priceToken1, (newValue) => saveToStorage('concentrated-priceToken1', newValue));
 
 interface CalculationParams {
   P_current: number;

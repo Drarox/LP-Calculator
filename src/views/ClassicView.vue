@@ -60,12 +60,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+
+// Helper functions for localStorage
+const loadFromStorage = (key: string, defaultValue: any) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+const saveToStorage = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
 
 // Reactive data properties
 const totalUSD = ref<number>(1000);
 const priceToken0 = ref<number>(1);
 const priceToken1 = ref<number>(1);
+
+// Load saved values on component mount
+onMounted(() => {
+  totalUSD.value = loadFromStorage('classic-totalUSD', 1000);
+  priceToken0.value = loadFromStorage('classic-priceToken0', 1);
+  priceToken1.value = loadFromStorage('classic-priceToken1', 1);
+});
+
+// Watch for changes and save to localStorage
+watch(totalUSD, (newValue) => saveToStorage('classic-totalUSD', newValue));
+watch(priceToken0, (newValue) => saveToStorage('classic-priceToken0', newValue));
+watch(priceToken1, (newValue) => saveToStorage('classic-priceToken1', newValue));
 
 interface CalculationParams {
   totalUSD: number;
