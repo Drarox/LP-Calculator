@@ -8,6 +8,7 @@
       <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 space-x-4">
         <router-link to="/" class="text-gray-300 hover:text-gray-100">Concentrated (V3)</router-link>
         <router-link to="/classic" class="text-gray-300 hover:text-gray-100">Classic (V2)</router-link>
+        <router-link to="/apr" class="text-gray-300 hover:text-gray-100">APR Calculator</router-link>
       </div>
       <div class="md:hidden">
         <button @click="toggleMenu" class="focus:outline-none">
@@ -20,6 +21,7 @@
     <div v-if="isMenuOpen" class="md:hidden mt-4">
       <router-link to="/" class="block py-2 px-4 hover:bg-gray-700">Concentrated (V3)</router-link>
       <router-link to="/classic" class="block py-2 px-4 hover:bg-gray-700">Classic (V2)</router-link>
+      <router-link to="/apr" class="block py-2 px-4 hover:bg-gray-700">APR Calculator</router-link>
     </div>
   </nav>
 </template>
