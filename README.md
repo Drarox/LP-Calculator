@@ -1,61 +1,132 @@
-# Liquidity Pool Calculator
+# 🚀 LP Calculator Suite
 
-A simple and intuitive web application to calculate the required token amounts for a concentrated liquidity position on a decentralized exchange (DEX). This tool is designed for DeFi users who need to determine the precise ratio of two tokens to deposit into a liquidity pool based on a specified price range.
+A comprehensive web application suite for DeFi liquidity providers, featuring advanced calculators and position tracking tools. Built with Vue 3, TypeScript, and Tailwind CSS for a modern, responsive experience.
 
-## Live Demo
+## 🌐 Live Demo
 
 Experience live at: [https://lp-calculator.pages.dev](https://lp-calculator.pages.dev)
 
-## Features
+## ✨ Features Overview
 
-- **Real-Time Calculation**: Instantly see the required amounts of Token0 and Token1 as you adjust the input parameters.
-- **Dynamic Price Range**: Set the total USD to deposit, the current market price, and your desired lower and upper price bounds.
-- **Price Difference Percentage**: Automatically displays the percentage difference between your price bounds and the current price, helping you visualize your range.
-- **Input Validation**: Provides clear error messages for invalid inputs, such as negative numbers or an incorrect price range.
-- **Modern UI**: A clean, dark-themed, and responsive interface built with Tailwind CSS.
+### 🎯 **Concentrated Liquidity Calculator (V3)**
+Calculate precise token amounts for concentrated liquidity positions with custom price ranges.
 
-## Getting Started
+### 🔄 **Classic Liquidity Calculator (V2)**
+Simple 50/50 token ratio calculations for traditional liquidity pools.
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+### 📊 **APR Calculator**
+Calculate Annual Percentage Rate (APR) for your liquidity pool investments using simple interest.
+
+### 📈 **Position Tracker**
+Comprehensive LP position management with real-time APR tracking and historical analytics.
+
+---
+
+## 🛠️ Detailed Features
+
+### **Concentrated Liquidity Calculator**
+- **Real-Time Calculation**: Instantly see required Token0 and Token1 amounts
+- **Dynamic Price Range**: Set custom lower and upper price bounds
+- **Price Difference Display**: Visual percentage differences from current price
+- **Advanced Math**: Handles complex concentrated liquidity formulas
+- **Input Validation**: Clear error messages for invalid ranges
+
+### **Classic Liquidity Calculator**
+- **Simple 50/50 Split**: Traditional liquidity pool calculations
+- **USD-Based Input**: Enter total USD amount to split evenly
+- **Token Price Integration**: Automatic conversion to token amounts
+- **Instant Results**: Real-time calculation updates
+
+### **APR Calculator**
+- **Simple Interest Formula**: `(Total Fees / Initial Investment) × (365 / Days) × 100`
+- **Date Range Selection**: Pick start and end dates for accurate calculations
+- **Multiple Metrics**: APR, daily rate, monthly rate, and total return percentage
+- **Time Period Display**: Shows investment duration in days and years
+
+### **Position Tracker**
+- **Position Management**: Create, track, and close LP positions
+- **Real-Time APR**: Automatic APR calculation based on fee collections
+- **Fee History**: Track all fee collections with timestamps
+- **Status Management**: Active vs. closed positions with frozen calculations
+- **Advanced Analytics**: Total fees, return percentage, days active, average daily fees
+- **Data Persistence**: All data saved locally with localStorage
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
 - [Node.js](https://nodejs.org/en/) (v18 or later recommended)
-- [npm](https://www.npmjs.com/) or a compatible package manager
+- [npm](https://www.npmjs.com/) or compatible package manager
 
 ### Installation
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/Drarox/LP-Calculator.git
-    cd LP-Calculator
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Drarox/LP-Calculator.git
+   cd LP-Calculator
+   ```
 
-2.  **Install dependencies:**
-    ```sh
-    npm install
-    ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-3.  **Run the development server:**
-    ```sh
-    npm run dev
-    ```
+3. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
 
-4.  Open your browser and navigate to the URL provided by Vite (usually `http://localhost:5173`).
+4. **Open your browser** and navigate to `http://localhost:5173`
 
-## Usage
+### Build for Production
+```bash
+npm run build
+```
 
-Once the application is running, simply fill in the following fields:
+---
 
-- **Total USD to Deposit**: The total value in USD you wish to provide as liquidity.
-- **Current Price**: The current exchange rate between Token1 and Token0.
-- **Lower Price Bound**: The minimum price for your concentrated liquidity range.
-- **Upper Price Bound**: The maximum price for your concentrated liquidity range.
-- **Price of Token0 (in USD)**: The current price of one unit of Token0.
-- **Price of Token1 (in USD)**: The current price of one unit of Token1.
+## 📖 Usage Guide
 
-The required amounts for Token0 and Token1 will be calculated and displayed automatically in the "Required Token Amounts" section.
+### **Concentrated Liquidity Calculator**
+1. Enter your total USD investment amount
+2. Set current market price between Token1 and Token0
+3. Define your price range (lower and upper bounds)
+4. Input current USD prices for both tokens
+5. View calculated token amounts instantly
 
-## License
+### **Classic Liquidity Calculator**
+1. Enter total USD amount to deposit
+2. Input current USD prices for both tokens
+3. Get 50/50 split amounts automatically
+
+### **APR Calculator**
+1. Enter your initial investment amount
+2. Input total fees collected
+3. Select start and end dates
+4. View comprehensive APR analytics
+
+### **Position Tracker**
+1. **Create Position**: Add name, investment amount, opening date, and optional external link
+2. **Track Fees**: Add fee collections as they occur with timestamps
+3. **Monitor Performance**: Watch real-time APR calculations
+4. **Manage Lifecycle**: Close positions to freeze calculations or reopen as needed
+5. **Review History**: Access complete historical performance data
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/Drarox/LP-Calculator/blob/master/LICENSE) file for details.
