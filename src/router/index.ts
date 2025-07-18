@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import ConcentratedView from '../views/ConcentratedView.vue';
 import ClassicView from '../views/ClassicView.vue';
 import AprView from '../views/AprView.vue';
+import PositionTrackerView from '../views/PositionTrackerView.vue';
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/apr',
     name: 'APR',
     component: AprView
+  },
+  {
+    path: '/tracker',
+    name: 'Position Tracker',
+    component: PositionTrackerView
   }
 ];
 

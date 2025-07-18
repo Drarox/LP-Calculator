@@ -1,0 +1,597 @@
+<template>
+  <div class="flex items-center justify-center p-4">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-700">
+      <h1 class="text-4xl font-bold text-center text-gray-100 mb-6">
+        <span class="bg-gradient-to-r from-purple-400 to-blue-300 text-transparent bg-clip-text">LP Position
+          Tracker</span>
+      </h1>
+      <p class="text-center text-gray-400 mb-8">
+        Track your liquidity pool positions and monitor their APR performance over time.
+      </p>
+
+      <!-- Add New Position Button -->
+      <div class="mb-6 flex justify-end">
+        <button @click="showAddForm = true"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+          + Add New Position
+        </button>
+      </div>
+
+      <!-- Add Position Form -->
+      <div v-if="showAddForm" class="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-6">
+        <h3 class="text-xl font-semibold text-gray-200 mb-4">Add New LP Position</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Position Name</label>
+            <input type="text" v-model="newPosition.name" placeholder="e.g. USDC/USDT on Uniswap"
+              class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Initial Investment ($)</label>
+            <input type="number" v-model.number="newPosition.initialAmount" step="any"
+              class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Opening Date & Time</label>
+            <input type="datetime-local" v-model="newPosition.openingDate"
+              class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">External Link (Optional)</label>
+            <input type="url" v-model="newPosition.externalLink" placeholder="https://..."
+              class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button @click="addPosition" :disabled="!newPosition.name || !newPosition.initialAmount"
+            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+            Create Position
+          </button>
+          <button @click="cancelAddForm"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Positions List -->
+      <div v-if="positions.length === 0 && !showAddForm" class="text-center text-gray-400 py-12">
+        <p class="text-lg mb-4">No LP positions tracked yet</p>
+        <p>Click "Add New Position" to start tracking your liquidity pool performance</p>
+      </div>
+
+      <!-- Active Positions Section -->
+      <div v-if="activePositions.length > 0" class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-200 mb-4 flex items-center">
+          <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+          Active Positions ({{ activePositions.length }})
+        </h2>
+        <div class="space-y-4">
+          <div v-for="position in activePositions" :key="position.id"
+            class="bg-gray-700 rounded-lg border border-gray-600 overflow-hidden">
+
+            <!-- Position Header -->
+            <div class="p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="text-lg font-semibold text-gray-200">{{ position.name }}</h3>
+                    <span class="px-2 py-1 bg-green-600 text-green-100 text-xs rounded-full">Active</span>
+                  </div>
+                  <p class="text-sm text-gray-400">Initial: ${{ position.initialAmount.toFixed(2) }} • Opened: {{
+                    formatDate(position.openingDate) }}</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <!-- APR Stats -->
+                  <div class="text-right mr-4">
+                    <div class="text-lg font-bold text-blue-400">{{ getPositionAPR(position) }}%</div>
+                    <div class="text-xs text-gray-400">Current APR</div>
+                  </div>
+
+                  <!-- Action Buttons with Icons -->
+                  <div class="flex items-center gap-1">
+
+                    <!-- Delete Button -->
+                    <button @click="deletePosition(position.id)" title="Delete Position"
+                      class="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                      </svg>
+                    </button>
+
+                    <!-- Close Position Button -->
+                    <button @click="closePosition(position.id)" title="Close Position"
+                      class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </button>
+
+                    <!-- External Link Button -->
+                    <button v-if="position.externalLink" @click="openExternalLink(position.externalLink)"
+                      title="Open External Link"
+                      class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </button>
+
+                    <!-- Expand/Collapse Button -->
+                    <button @click="togglePosition(position.id)"
+                      :title="expandedPositions.has(position.id) ? 'Collapse Details' : 'Expand Details'"
+                      class="bg-gray-600 hover:bg-gray-500 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!expandedPositions.has(position.id)" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7">
+                        </path>
+                      </svg>
+                    </button>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expanded Content for Active Positions -->
+            <div v-if="expandedPositions.has(position.id)" class="border-t border-gray-600 p-4">
+
+              <!-- Add Fee Entry Form -->
+              <div class="bg-gray-800 p-4 rounded-lg mb-4">
+                <h4 class="text-md font-semibold text-gray-200 mb-3">Add Fee Collection</h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Fees Collected ($)</label>
+                    <input type="number" v-model.number="newFeeEntry[position.id].amount" step="any"
+                      class="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Collection Date</label>
+                    <input type="datetime-local" v-model="newFeeEntry[position.id].datetime"
+                      class="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+                  </div>
+
+                  <div class="flex items-end">
+                    <button @click="addFeeEntry(position.id)" :disabled="!newFeeEntry[position.id]?.amount"
+                      class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+                      Add Entry
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fee Entries List -->
+              <div class="space-y-2">
+                <h4 class="text-md font-semibold text-gray-200 mb-2">Fee Collection History</h4>
+
+                <div v-if="position.feeEntries.length === 0" class="text-gray-400 text-sm">
+                  No fee collections recorded yet
+                </div>
+
+                <div v-else class="space-y-2 max-h-60 overflow-y-auto">
+                  <div v-for="(entry, index) in position.feeEntries.slice().reverse()" :key="index"
+                    class="bg-gray-800 p-3 rounded flex justify-between items-center">
+                    <div>
+                      <span class="text-green-400 font-semibold">${{ entry.amount.toFixed(2) }}</span>
+                      <span class="text-gray-400 text-sm ml-2">{{ formatDate(entry.datetime) }}</span>
+                    </div>
+                    <button @click="deleteFeeEntry(position.id, position.feeEntries.length - 1 - index)"
+                      title="Delete Entry"
+                      class="bg-red-600 hover:bg-red-700 text-white p-1 rounded transition duration-150 ease-in-out">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Position Stats -->
+              <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Total Fees</div>
+                  <div class="text-green-400 font-semibold">${{ getTotalFees(position).toFixed(2) }}</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Total Return</div>
+                  <div class="text-green-400 font-semibold">{{ getTotalReturnPercentage(position).toFixed(2) }}%</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Days Active</div>
+                  <div class="text-blue-400 font-semibold">{{ getDaysActive(position) }}</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Avg Daily</div>
+                  <div class="text-blue-400 font-semibold">${{ getAverageDailyFees(position).toFixed(2) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Closed Positions Section -->
+      <div v-if="closedPositions.length > 0">
+        <h2 class="text-2xl font-semibold text-gray-200 mb-4 flex items-center">
+          <span class="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>
+          Position History ({{ closedPositions.length }})
+        </h2>
+        <div class="space-y-4">
+          <div v-for="position in closedPositions" :key="position.id"
+            class="bg-gray-700 rounded-lg border border-gray-600 overflow-hidden opacity-75">
+
+            <!-- Position Header -->
+            <div class="p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="text-lg font-semibold text-gray-200">{{ position.name }}</h3>
+                    <span class="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded-full">Closed</span>
+                  </div>
+                  <p class="text-sm text-gray-400">
+                    Initial: ${{ position.initialAmount.toFixed(2) }} •
+                    {{ formatDate(position.openingDate) }} - {{ formatDate(position.closingDate!) }}
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <!-- Final APR Stats -->
+                  <div class="text-right mr-4">
+                    <div class="text-lg font-bold text-gray-400">{{ getPositionAPR(position) }}%</div>
+                    <div class="text-xs text-gray-400">Final APR</div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-1">
+                    <!-- External Link Button -->
+                    <button v-if="position.externalLink" @click="openExternalLink(position.externalLink)"
+                      title="Open External Link"
+                      class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                      </svg>
+                    </button>
+
+                    <!-- Delete Button -->
+                    <button @click="deletePosition(position.id)" title="Delete Position"
+                      class="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                      </svg>
+                    </button>
+
+                    <!-- Reopen Position Button -->
+                    <button @click="reopenPosition(position.id)" title="Reopen Position"
+                      class="bg-green-600 hover:bg-green-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                      </svg>
+                    </button>
+
+                    <!-- Expand/Collapse Button -->
+                    <button @click="togglePosition(position.id)"
+                      :title="expandedPositions.has(position.id) ? 'Collapse Details' : 'Expand Details'"
+                      class="bg-gray-600 hover:bg-gray-500 text-white p-2 rounded transition duration-150 ease-in-out">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!expandedPositions.has(position.id)" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7">
+                        </path>
+                      </svg>
+                    </button>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expanded Content for Closed Positions (Read-only) -->
+            <div v-if="expandedPositions.has(position.id)" class="border-t border-gray-600 p-4">
+
+              <!-- Fee Entries List (Read-only) -->
+              <div class="space-y-2">
+                <h4 class="text-md font-semibold text-gray-200 mb-2">Fee Collection History (Final)</h4>
+
+                <div v-if="position.feeEntries.length === 0" class="text-gray-400 text-sm">
+                  No fee collections were recorded
+                </div>
+
+                <div v-else class="space-y-2 max-h-60 overflow-y-auto">
+                  <div v-for="(entry, index) in position.feeEntries.slice().reverse()" :key="index"
+                    class="bg-gray-800 p-3 rounded flex justify-between items-center">
+                    <div>
+                      <span class="text-green-400 font-semibold">${{ entry.amount.toFixed(2) }}</span>
+                      <span class="text-gray-400 text-sm ml-2">{{ formatDate(entry.datetime) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Final Position Stats -->
+              <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Total Fees</div>
+                  <div class="text-green-400 font-semibold">${{ getTotalFees(position).toFixed(2) }}</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Total Return</div>
+                  <div class="text-green-400 font-semibold">{{ getTotalReturnPercentage(position).toFixed(2) }}%</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Days Active</div>
+                  <div class="text-blue-400 font-semibold">{{ getDaysActive(position) }}</div>
+                </div>
+                <div class="bg-gray-800 p-3 rounded">
+                  <div class="text-gray-400">Avg Daily</div>
+                  <div class="text-blue-400 font-semibold">${{ getAverageDailyFees(position).toFixed(2) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, watch, computed } from 'vue';
+
+interface FeeEntry {
+  amount: number;
+  datetime: string;
+}
+
+interface Position {
+  id: string;
+  name: string;
+  initialAmount: number;
+  externalLink?: string;
+  createdAt: string;
+  openingDate: string;
+  closingDate?: string;
+  status: 'active' | 'closed';
+  feeEntries: FeeEntry[];
+}
+
+// Reactive state
+const positions = ref<Position[]>([]);
+const showAddForm = ref(false);
+const expandedPositions = ref(new Set<string>());
+const newFeeEntry = reactive<Record<string, { amount: number | null; datetime: string }>>({});
+
+// Helper function to get local datetime in the format required by datetime-local input
+const getLocalDateTimeString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const newPosition = reactive({
+  name: '',
+  initialAmount: null as number | null,
+  externalLink: '',
+  openingDate: getLocalDateTimeString()
+});
+
+// Helper functions for localStorage
+const loadPositions = (): Position[] => {
+  try {
+    const stored = localStorage.getItem('lp-positions');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const savePositions = () => {
+  try {
+    localStorage.setItem('lp-positions', JSON.stringify(positions.value));
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
+// Initialize new fee entry for a position
+const initializeFeeEntry = (positionId: string) => {
+  if (!newFeeEntry[positionId]) {
+    newFeeEntry[positionId] = {
+      amount: null,
+      datetime: getLocalDateTimeString()
+    };
+  }
+};
+
+// Position management functions
+const addPosition = () => {
+  if (!newPosition.name || !newPosition.initialAmount) return;
+
+  const position: Position = {
+    id: Date.now().toString(),
+    name: newPosition.name,
+    initialAmount: newPosition.initialAmount,
+    externalLink: newPosition.externalLink || undefined,
+    createdAt: new Date().toISOString(),
+    openingDate: newPosition.openingDate,
+    status: 'active',
+    feeEntries: []
+  };
+
+  positions.value.push(position);
+  initializeFeeEntry(position.id);
+  cancelAddForm();
+};
+
+const closePosition = (positionId: string) => {
+  if (confirm('Are you sure you want to close this position? This will freeze all calculations.')) {
+    const position = positions.value.find(p => p.id === positionId);
+    if (position) {
+      position.status = 'closed';
+      position.closingDate = new Date().toISOString();
+    }
+  }
+};
+
+const reopenPosition = (positionId: string) => {
+  const position = positions.value.find(p => p.id === positionId);
+  if (position) {
+    position.status = 'active';
+    position.closingDate = undefined;
+  }
+};
+
+const deletePosition = (positionId: string) => {
+  if (confirm('Are you sure you want to delete this position? This action cannot be undone.')) {
+    positions.value = positions.value.filter(p => p.id !== positionId);
+    delete newFeeEntry[positionId];
+    expandedPositions.value.delete(positionId);
+  }
+};
+
+const cancelAddForm = () => {
+  showAddForm.value = false;
+  newPosition.name = '';
+  newPosition.initialAmount = null;
+  newPosition.externalLink = '';
+  newPosition.openingDate = getLocalDateTimeString();
+};
+
+// Fee entry management
+const addFeeEntry = (positionId: string) => {
+  const entry = newFeeEntry[positionId];
+  if (!entry?.amount) return;
+
+  const position = positions.value.find(p => p.id === positionId);
+  if (!position) return;
+
+  position.feeEntries.push({
+    amount: entry.amount,
+    datetime: entry.datetime
+  });
+
+  // Reset form
+  newFeeEntry[positionId] = {
+    amount: null,
+    datetime: getLocalDateTimeString()
+  };
+};
+
+const deleteFeeEntry = (positionId: string, entryIndex: number) => {
+  const position = positions.value.find(p => p.id === positionId);
+  if (position) {
+    position.feeEntries.splice(entryIndex, 1);
+  }
+};
+
+// UI functions
+const togglePosition = (positionId: string) => {
+  if (expandedPositions.value.has(positionId)) {
+    expandedPositions.value.delete(positionId);
+  } else {
+    expandedPositions.value.add(positionId);
+    initializeFeeEntry(positionId);
+  }
+};
+
+const openExternalLink = (url: string) => {
+  window.open(url, '_blank');
+};
+
+const formatDate = (datetime: string) => {
+  return new Date(datetime).toLocaleString();
+};
+
+// Calculation functions
+const getTotalFees = (position: Position): number => {
+  return position.feeEntries.reduce((sum, entry) => sum + entry.amount, 0);
+};
+
+const getTotalReturnPercentage = (position: Position): number => {
+  const totalFees = getTotalFees(position);
+  return (totalFees / position.initialAmount) * 100;
+};
+
+const getDaysActive = (position: Position): number => {
+  if (position.feeEntries.length === 0) {
+    // If no fee entries, calculate days from opening date to now
+    const openingDate = new Date(position.openingDate);
+    const now = new Date();
+    const diffTime = now.getTime() - openingDate.getTime();
+    return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  }
+
+  const openingDate = new Date(position.openingDate);
+  const lastEntry = new Date(position.feeEntries[position.feeEntries.length - 1].datetime);
+  const diffTime = lastEntry.getTime() - openingDate.getTime();
+  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+};
+
+const getAverageDailyFees = (position: Position): number => {
+  const totalFees = getTotalFees(position);
+  const daysActive = getDaysActive(position);
+  return daysActive > 0 ? totalFees / daysActive : 0;
+};
+
+const getPositionAPR = (position: Position): string => {
+  if (position.feeEntries.length === 0) return '0.00';
+
+  const totalFees = getTotalFees(position);
+  const daysActive = getDaysActive(position);
+
+  if (daysActive === 0) return '0.00';
+
+  // Simple APR calculation: (Total Fees / Initial Investment) * (365 / Days) * 100
+  const apr = (totalFees / position.initialAmount) * (365 / daysActive) * 100;
+  return apr.toFixed(2);
+};
+
+// Computed properties for sorting positions
+const activePositions = computed(() => {
+  return positions.value
+    .filter(p => p.status === 'active')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+});
+
+const closedPositions = computed(() => {
+  return positions.value
+    .filter(p => p.status === 'closed')
+    .sort((a, b) => new Date(b.closingDate || b.createdAt).getTime() - new Date(a.closingDate || a.createdAt).getTime());
+});
+
+// Lifecycle
+onMounted(() => {
+  positions.value = loadPositions();
+  // Initialize fee entries for all positions
+  positions.value.forEach(position => {
+    initializeFeeEntry(position.id);
+  });
+});
+
+// Watch for changes and save to localStorage
+watch(positions, savePositions, { deep: true });
+</script>
