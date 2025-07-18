@@ -9,11 +9,36 @@
         Track your liquidity pool positions and monitor their APR performance over time.
       </p>
 
-      <!-- Add New Position Button -->
-      <div class="mb-6 flex justify-end">
+      <!-- Header Actions -->
+      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex flex-wrap gap-2">
+          <button @click="exportData" title="Export Backup"
+            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+              </path>
+            </svg>
+            Export
+          </button>
+
+          <button @click="triggerFileInput" title="Import Backup"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+            </svg>
+            Import
+          </button>
+          <input type="file" ref="fileInput" @change="importData" accept=".json" class="hidden">
+        </div>
+
         <button @click="showAddForm = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
-          + Add New Position
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Position
         </button>
       </div>
 
@@ -51,11 +76,11 @@
 
         <div class="flex gap-3">
           <button @click="addPosition" :disabled="!newPosition.name || !newPosition.initialAmount"
-            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out cursor-pointer">
             Create Position
           </button>
           <button @click="cancelAddForm"
-            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out cursor-pointer">
             Cancel
           </button>
         </div>
@@ -111,7 +136,7 @@
 
                     <!-- Close Position Button -->
                     <button @click="closePosition(position.id)" title="Close Position"
-                      class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded transition duration-150 ease-in-out">
+                      class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded transition duration-150 ease-in-out cursor-pointer">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -380,6 +405,7 @@ const positions = ref<Position[]>([]);
 const showAddForm = ref(false);
 const expandedPositions = ref(new Set<string>());
 const newFeeEntry = reactive<Record<string, { amount: number | null; datetime: string }>>({});
+const fileInput = ref<HTMLInputElement>();
 
 // Helper function to get local datetime in the format required by datetime-local input
 const getLocalDateTimeString = () => {
@@ -591,6 +617,73 @@ onMounted(() => {
     initializeFeeEntry(position.id);
   });
 });
+
+// Export/Import functions
+const exportData = () => {
+  try {
+    const dataToExport = {
+      positions: positions.value,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `lp-positions-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Backup exported successfully!');
+  } catch (error) {
+    alert('Failed to export backup. Please try again.');
+  }
+};
+
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
+
+const importData = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target?.result as string);
+
+      // Validate the imported data structure
+      if (!importedData.positions || !Array.isArray(importedData.positions)) {
+        throw new Error('Invalid backup file format');
+      }
+
+      // Confirm import
+      const confirmMessage = `This will replace your current data with ${importedData.positions.length} positions from ${new Date(importedData.exportDate).toLocaleDateString()}. Continue?`;
+
+      if (confirm(confirmMessage)) {
+        positions.value = importedData.positions;
+
+        // Initialize fee entries for all imported positions
+        positions.value.forEach(position => {
+          initializeFeeEntry(position.id);
+        });
+
+        alert('Backup imported successfully!');
+      }
+    } catch (error) {
+      alert('Failed to import backup. Please check the file format.');
+    }
+
+    // Reset file input
+    (event.target as HTMLInputElement).value = '';
+  };
+
+  reader.readAsText(file);
+};
 
 // Watch for changes and save to localStorage
 watch(positions, savePositions, { deep: true });

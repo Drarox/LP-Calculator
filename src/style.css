@@ -19,3 +19,11 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #667080; /* Lighter thumb on hover */
 }
+
+button {
+    cursor: pointer;
+}
+  
+button:disabled {
+  cursor: not-allowed;
+}
