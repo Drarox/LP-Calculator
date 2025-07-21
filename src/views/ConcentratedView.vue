@@ -12,21 +12,21 @@
         <!-- Total USD Input -->
         <div class="input-group">
           <label for="totalUSD" class="block text-sm font-medium text-gray-300 mb-1">Total USD to Deposit</label>
-          <input type="number" id="totalUSD" v-model.number="totalUSD" step="any"
+          <input type="number" id="totalUSD" v-model.number="formData.totalUSD" step="any"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
         <!-- Current Price Input -->
         <div class="input-group">
           <label for="P_current" class="block text-sm font-medium text-gray-300 mb-1">Current Price (Token1 per Token0)</label>
-          <input type="number" id="P_current" v-model.number="P_current" step="0.0001"
+          <input type="number" id="P_current" v-model.number="formData.P_current" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
         <!-- Lower Price Input -->
         <div class="input-group">
           <label for="P_lower" class="block text-sm font-medium text-gray-300 mb-1">Lower Price Bound</label>
-          <input type="number" id="P_lower" v-model.number="P_lower" step="0.0001"
+          <input type="number" id="P_lower" v-model.number="formData.P_lower" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           <p v-if="lowerDiffPercentage !== null"
              :class="{'text-green-400': lowerDiffPercentage >= 0, 'text-red-400': lowerDiffPercentage < 0}"
@@ -38,7 +38,7 @@
         <!-- Upper Price Input -->
         <div class="input-group">
           <label for="P_upper" class="block text-sm font-medium text-gray-300 mb-1">Upper Price Bound</label>
-          <input type="number" id="P_upper" v-model.number="P_upper" step="0.0001"
+          <input type="number" id="P_upper" v-model.number="formData.P_upper" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           <p v-if="upperDiffPercentage !== null"
              :class="{'text-green-400': upperDiffPercentage >= 0, 'text-red-400': upperDiffPercentage < 0}"
@@ -50,24 +50,24 @@
         <!-- Price Token0 Input -->
         <div class="input-group">
           <label for="priceToken0" class="block text-sm font-medium text-gray-300 mb-1">Price of Token0 (in USD)</label>
-          <input type="number" id="priceToken0" v-model.number="priceToken0" step="0.0001"
+          <input type="number" id="priceToken0" v-model.number="formData.priceToken0" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
         <!-- Price Token1 Input -->
         <div class="input-group">
           <label for="priceToken1" class="block text-sm font-medium text-gray-300 mb-1">Price of Token1 (in USD)</label>
-          <input type="number" id="priceToken1" v-model.number="priceToken1" step="0.0001"
+          <input type="number" id="priceToken1" v-model.number="formData.priceToken1" step="0.0001"
                  class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
       </div>
 
       <!-- Validation Message -->
-      <div v-if="P_lower >= P_upper" class="bg-red-800 border border-red-700 text-red-200 px-4 py-3 rounded-md mb-6" role="alert">
+      <div v-if="formData.P_lower >= formData.P_upper" class="bg-red-800 border border-red-700 text-red-200 px-4 py-3 rounded-md mb-6" role="alert">
         <p class="font-bold">Input Error:</p>
         <p>The lower price bound must be less than the upper price bound.</p>
       </div>
-      <div v-if="P_current <= 0 || P_lower <= 0 || P_upper <= 0 || totalUSD <= 0 || priceToken0 <= 0 || priceToken1 <= 0"
+      <div v-if="formData.P_current <= 0 || formData.P_lower <= 0 || formData.P_upper <= 0 || formData.totalUSD <= 0 || formData.priceToken0 <= 0 || formData.priceToken1 <= 0"
            class="bg-red-800 border border-red-700 text-red-200 px-4 py-3 rounded-md mb-6" role="alert">
         <p class="font-bold">Input Error:</p>
         <p>All input values must be greater than zero.</p>
@@ -93,51 +93,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { computed } from 'vue';
+import { useFormPersistence } from '@/composables/useFormPersistence';
 
-// Helper functions for localStorage
-const loadFromStorage = (key: string, defaultValue: any) => {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
-const saveToStorage = (key: string, value: any) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
-// Reactive data properties
-const P_current = ref<number>(1.00107);
-const P_lower = ref<number>(1);
-const P_upper = ref<number>(1.0012);
-const totalUSD = ref<number>(1000);
-const priceToken0 = ref<number>(1);
-const priceToken1 = ref<number>(1);
-
-// Load saved values on component mount
-onMounted(() => {
-  P_current.value = loadFromStorage('concentrated-P_current', 1.00107);
-  P_lower.value = loadFromStorage('concentrated-P_lower', 1);
-  P_upper.value = loadFromStorage('concentrated-P_upper', 1.0012);
-  totalUSD.value = loadFromStorage('concentrated-totalUSD', 1000);
-  priceToken0.value = loadFromStorage('concentrated-priceToken0', 1);
-  priceToken1.value = loadFromStorage('concentrated-priceToken1', 1);
+// Form data with persistence
+const { formData } = useFormPersistence('concentrated-form', {
+  P_current: 1.00107,
+  P_lower: 1,
+  P_upper: 1.0012,
+  totalUSD: 1000,
+  priceToken0: 1,
+  priceToken1: 1
 });
-
-// Watch for changes and save to localStorage
-watch(P_current, (newValue) => saveToStorage('concentrated-P_current', newValue));
-watch(P_lower, (newValue) => saveToStorage('concentrated-P_lower', newValue));
-watch(P_upper, (newValue) => saveToStorage('concentrated-P_upper', newValue));
-watch(totalUSD, (newValue) => saveToStorage('concentrated-totalUSD', newValue));
-watch(priceToken0, (newValue) => saveToStorage('concentrated-priceToken0', newValue));
-watch(priceToken1, (newValue) => saveToStorage('concentrated-priceToken1', newValue));
 
 interface CalculationParams {
   P_current: number;
@@ -194,28 +161,28 @@ const calculateTokenAmounts = ({ P_current, P_lower, P_upper, totalUSD, priceTok
 // Computed property for calculated amounts
 const calculatedAmounts = computed(() => {
     return calculateTokenAmounts({
-        P_current: P_current.value,
-        P_lower: P_lower.value,
-        P_upper: P_upper.value,
-        totalUSD: totalUSD.value,
-        priceToken0: priceToken0.value,
-        priceToken1: priceToken1.value
+        P_current: formData.value.P_current,
+        P_lower: formData.value.P_lower,
+        P_upper: formData.value.P_upper,
+        totalUSD: formData.value.totalUSD,
+        priceToken0: formData.value.priceToken0,
+        priceToken1: formData.value.priceToken1
     });
 });
 
 // Computed property for lower price difference percentage
 const lowerDiffPercentage = computed<number | null>(() => {
-    if (P_current.value === null || P_current.value === 0 || P_lower.value === null) {
+    if (formData.value.P_current === null || formData.value.P_current === 0 || formData.value.P_lower === null) {
         return null;
     }
-    return ((P_lower.value - P_current.value) / P_current.value) * 100;
+    return ((formData.value.P_lower - formData.value.P_current) / formData.value.P_current) * 100;
 });
 
 // Computed property for upper price difference percentage
 const upperDiffPercentage = computed<number | null>(() => {
-    if (P_current.value === null || P_current.value === 0 || P_upper.value === null) {
+    if (formData.value.P_current === null || formData.value.P_current === 0 || formData.value.P_upper === null) {
         return null;
     }
-    return ((P_upper.value - P_current.value) / P_current.value) * 100;
+    return ((formData.value.P_upper - formData.value.P_current) / formData.value.P_current) * 100;
 });
 </script>

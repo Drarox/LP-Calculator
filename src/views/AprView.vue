@@ -13,7 +13,7 @@
         <div class="input-group mb-6">
           <label for="initialAmount" class="block text-sm font-medium text-gray-300 mb-1">Initial Investment Amount
             ($)</label>
-          <input type="number" id="initialAmount" v-model.number="initialAmount" step="any"
+          <input type="number" id="initialAmount" v-model.number="formData.initialAmount" step="any"
             class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
@@ -21,7 +21,7 @@
         <div class="input-group mb-6">
           <label for="feesCollected" class="block text-sm font-medium text-gray-300 mb-1">Total Fees Collected
             ($)</label>
-          <input type="number" id="feesCollected" v-model.number="feesCollected" step="any"
+          <input type="number" id="feesCollected" v-model.number="formData.feesCollected" step="any"
             class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
         </div>
 
@@ -29,14 +29,14 @@
           <!-- Start Date Input -->
           <div class="input-group">
             <label for="startDate" class="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
-            <input type="date" id="startDate" v-model="startDate"
+            <input type="date" id="startDate" v-model="formData.startDate"
               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           </div>
 
           <!-- End Date Input -->
           <div class="input-group">
             <label for="endDate" class="block text-sm font-medium text-gray-300 mb-1">End Date</label>
-            <input type="date" id="endDate" v-model="endDate"
+            <input type="date" id="endDate" v-model="formData.endDate"
               class="mt-1 block w-full px-4 py-2 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-gray-100 transition duration-150 ease-in-out">
           </div>
         </div>
@@ -105,67 +105,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { computed } from 'vue';
+import { useFormPersistence } from '@/composables/useFormPersistence';
+import { useAprCalculations } from '@/composables/useAprCalculations';
+import { calculateDaysBetween } from '@/utils/datetime';
 
-// Helper functions for localStorage
-const loadFromStorage = (key: string, defaultValue: any) => {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
-const saveToStorage = (key: string, value: any) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
-// Reactive data properties with localStorage defaults
-const initialAmount = ref<number>(1000);
-const feesCollected = ref<number>(50);
-const startDate = ref<string>(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-const endDate = ref<string>(new Date().toISOString().split('T')[0]);
-
-// Load saved values on component mount
-onMounted(() => {
-  initialAmount.value = loadFromStorage('apr-initialAmount', 1000);
-  feesCollected.value = loadFromStorage('apr-feesCollected', 50);
-  startDate.value = loadFromStorage('apr-startDate', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-  endDate.value = loadFromStorage('apr-endDate', new Date().toISOString().split('T')[0]);
+// Form data with persistence
+const { formData } = useFormPersistence('apr-form', {
+  initialAmount: 1000,
+  feesCollected: 50,
+  startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  endDate: new Date().toISOString().split('T')[0]
 });
 
-// Watch for changes and save to localStorage
-watch(initialAmount, (newValue) => saveToStorage('apr-initialAmount', newValue));
-watch(feesCollected, (newValue) => saveToStorage('apr-feesCollected', newValue));
-watch(startDate, (newValue) => saveToStorage('apr-startDate', newValue));
-watch(endDate, (newValue) => saveToStorage('apr-endDate', newValue));
+// APR calculations composable
+const { calculateAPR, formatAPRValue } = useAprCalculations();
 
 // Computed property for days between dates
 const daysBetween = computed(() => {
-  if (!startDate.value || !endDate.value) return 0;
-
-  const start = new Date(startDate.value);
-  const end = new Date(endDate.value);
-  const diffTime = end.getTime() - start.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return diffDays > 0 ? diffDays : 0;
+  if (!formData.value.startDate || !formData.value.endDate) return 0;
+  return calculateDaysBetween(formData.value.startDate, formData.value.endDate);
 });
 
 // Validation error computed property
 const validationError = computed(() => {
-  if (initialAmount.value <= 0) {
+  if (formData.value.initialAmount <= 0) {
     return 'Initial investment amount must be greater than zero.';
   }
-  if (feesCollected.value < 0) {
+  if (formData.value.feesCollected < 0) {
     return 'Fees collected cannot be negative.';
   }
-  if (!startDate.value || !endDate.value) {
+  if (!formData.value.startDate || !formData.value.endDate) {
     return 'Both start and end dates must be provided.';
   }
   if (daysBetween.value <= 0) {
@@ -174,16 +144,8 @@ const validationError = computed(() => {
   return null;
 });
 
-interface APRResults {
-  apr: string;
-  totalReturn: string;
-  returnPercentage: string;
-  dailyRate: string;
-  monthlyRate: string;
-}
-
-// APR calculation function
-const calculateAPR = (): APRResults => {
+// Computed property for calculated results using the composable
+const calculatedResults = computed(() => {
   if (validationError.value || daysBetween.value === 0) {
     return {
       apr: '0.00',
@@ -194,27 +156,19 @@ const calculateAPR = (): APRResults => {
     };
   }
 
-  const totalReturn = feesCollected.value;
-  const returnPercentage = (totalReturn / initialAmount.value) * 100;
-
-  // Simple APR calculation for liquidity pools: (Total Fees / Initial Investment) * (365 / Days) * 100
-  const apr = (totalReturn / initialAmount.value) * (365 / daysBetween.value) * 100;
-
-  // Daily and monthly rates (simple interest)
-  const dailyRate = (totalReturn / initialAmount.value) * (1 / daysBetween.value) * 100;
-  const monthlyRate = (totalReturn / initialAmount.value) * (30 / daysBetween.value) * 100;
+  const results = calculateAPR({
+    initialAmount: formData.value.initialAmount,
+    totalFees: formData.value.feesCollected,
+    startDate: formData.value.startDate,
+    endDate: formData.value.endDate
+  });
 
   return {
-    apr: apr.toFixed(2),
-    totalReturn: totalReturn.toFixed(2),
-    returnPercentage: returnPercentage.toFixed(2),
-    dailyRate: dailyRate.toFixed(4),
-    monthlyRate: monthlyRate.toFixed(2)
+    apr: formatAPRValue(results.apr),
+    totalReturn: formatAPRValue(results.totalReturn),
+    returnPercentage: formatAPRValue(results.returnPercentage),
+    dailyRate: formatAPRValue(results.dailyRate, 4),
+    monthlyRate: formatAPRValue(results.monthlyRate)
   };
-};
-
-// Computed property for calculated results
-const calculatedResults = computed(() => {
-  return calculateAPR();
 });
 </script>

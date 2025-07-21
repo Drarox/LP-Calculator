@@ -33,7 +33,7 @@
           <input type="file" ref="fileInput" @change="importData" accept=".json" class="hidden">
         </div>
 
-        <button @click="showAddForm = true"
+        <button @click="openAddForm"
           class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center gap-2 cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -382,6 +382,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue';
+import { loadFromStorage, saveToStorage } from '@/utils/storage';
+import { getLocalDateTimeString, formatDateTime } from '@/utils/datetime';
+import { useAprCalculations } from '@/composables/useAprCalculations';
 
 interface FeeEntry {
   amount: number;
@@ -407,17 +410,6 @@ const expandedPositions = ref(new Set<string>());
 const newFeeEntry = reactive<Record<string, { amount: number | null; datetime: string }>>({});
 const fileInput = ref<HTMLInputElement>();
 
-// Helper function to get local datetime in the format required by datetime-local input
-const getLocalDateTimeString = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
 const newPosition = reactive({
   name: '',
   initialAmount: null as number | null,
@@ -425,22 +417,16 @@ const newPosition = reactive({
   openingDate: getLocalDateTimeString()
 });
 
+// APR calculations composable
+const { calculateAPR, formatAPRValue } = useAprCalculations();
+
 // Helper functions for localStorage
 const loadPositions = (): Position[] => {
-  try {
-    const stored = localStorage.getItem('lp-positions');
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  return loadFromStorage('lp-positions', []);
 };
 
 const savePositions = () => {
-  try {
-    localStorage.setItem('lp-positions', JSON.stringify(positions.value));
-  } catch {
-    // Silently fail if localStorage is not available
-  }
+  saveToStorage('lp-positions', positions.value);
 };
 
 // Initialize new fee entry for a position
@@ -450,6 +436,9 @@ const initializeFeeEntry = (positionId: string) => {
       amount: null,
       datetime: getLocalDateTimeString()
     };
+  } else {
+    // Always refresh the datetime when initializing
+    newFeeEntry[positionId].datetime = getLocalDateTimeString();
   }
 };
 
@@ -497,6 +486,12 @@ const deletePosition = (positionId: string) => {
     delete newFeeEntry[positionId];
     expandedPositions.value.delete(positionId);
   }
+};
+
+const openAddForm = () => {
+  showAddForm.value = true;
+  // Refresh the opening date to current time when form is opened
+  newPosition.openingDate = getLocalDateTimeString();
 };
 
 const cancelAddForm = () => {
@@ -548,9 +543,7 @@ const openExternalLink = (url: string) => {
   window.open(url, '_blank');
 };
 
-const formatDate = (datetime: string) => {
-  return new Date(datetime).toLocaleString();
-};
+const formatDate = formatDateTime;
 
 // Calculation functions
 const getTotalFees = (position: Position): number => {
@@ -563,18 +556,18 @@ const getTotalReturnPercentage = (position: Position): number => {
 };
 
 const getDaysActive = (position: Position): number => {
-  if (position.feeEntries.length === 0) {
-    // If no fee entries, calculate days from opening date to now
-    const openingDate = new Date(position.openingDate);
-    const now = new Date();
-    const diffTime = now.getTime() - openingDate.getTime();
-    return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-  }
+  const endDate = position.status === 'closed' && position.closingDate
+    ? position.closingDate
+    : position.feeEntries.length > 0
+      ? position.feeEntries[position.feeEntries.length - 1].datetime
+      : new Date().toISOString();
 
-  const openingDate = new Date(position.openingDate);
-  const lastEntry = new Date(position.feeEntries[position.feeEntries.length - 1].datetime);
-  const diffTime = lastEntry.getTime() - openingDate.getTime();
-  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  return calculateAPR({
+    initialAmount: position.initialAmount,
+    totalFees: getTotalFees(position),
+    startDate: position.openingDate,
+    endDate: endDate
+  }).daysActive;
 };
 
 const getAverageDailyFees = (position: Position): number => {
@@ -586,14 +579,20 @@ const getAverageDailyFees = (position: Position): number => {
 const getPositionAPR = (position: Position): string => {
   if (position.feeEntries.length === 0) return '0.00';
 
-  const totalFees = getTotalFees(position);
-  const daysActive = getDaysActive(position);
+  const endDate = position.status === 'closed' && position.closingDate
+    ? position.closingDate
+    : position.feeEntries.length > 0
+      ? position.feeEntries[position.feeEntries.length - 1].datetime
+      : new Date().toISOString();
 
-  if (daysActive === 0) return '0.00';
+  const results = calculateAPR({
+    initialAmount: position.initialAmount,
+    totalFees: getTotalFees(position),
+    startDate: position.openingDate,
+    endDate: endDate
+  });
 
-  // Simple APR calculation: (Total Fees / Initial Investment) * (365 / Days) * 100
-  const apr = (totalFees / position.initialAmount) * (365 / daysActive) * 100;
-  return apr.toFixed(2);
+  return formatAPRValue(results.apr);
 };
 
 // Computed properties for sorting positions
