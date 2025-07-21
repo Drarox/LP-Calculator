@@ -35,14 +35,15 @@ export const formatDate = (date: string): string => {
 };
 
 /**
- * Calculate days between two dates
+ * Calculate precise days between two dates (including fractional days)
  * @param {string} startDate - Start date in ISO format
  * @param {string} endDate - End date in ISO format
- * @returns {number} Number of days between dates
+ * @returns {number} Precise number of days between dates (e.g., 1.04 for 25 hours)
  */
 export const calculateDaysBetween = (startDate: string, endDate: string): number => {
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffTime = end.getTime() - start.getTime();
-  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  return Math.max(0.01, diffDays); // Minimum 0.01 days to avoid division by zero
 };

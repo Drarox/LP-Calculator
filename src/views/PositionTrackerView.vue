@@ -238,7 +238,7 @@
                 </div>
                 <div class="bg-gray-800 p-3 rounded">
                   <div class="text-gray-400">Days Active</div>
-                  <div class="text-blue-400 font-semibold">{{ getDaysActive(position) }}</div>
+                  <div class="text-blue-400 font-semibold">{{ formatDaysActive(position) }}</div>
                 </div>
                 <div class="bg-gray-800 p-3 rounded">
                   <div class="text-gray-400">Avg Daily</div>
@@ -364,7 +364,7 @@
                 </div>
                 <div class="bg-gray-800 p-3 rounded">
                   <div class="text-gray-400">Days Active</div>
-                  <div class="text-blue-400 font-semibold">{{ getDaysActive(position) }}</div>
+                  <div class="text-blue-400 font-semibold">{{ formatDaysActive(position) }}</div>
                 </div>
                 <div class="bg-gray-800 p-3 rounded">
                   <div class="text-gray-400">Avg Daily</div>
@@ -568,6 +568,10 @@ const getDaysActive = (position: Position): number => {
     startDate: position.openingDate,
     endDate: endDate
   }).daysActive;
+};
+
+const formatDaysActive = (position: Position): string => {
+  return getDaysActive(position).toFixed(2);
 };
 
 const getAverageDailyFees = (position: Position): number => {
