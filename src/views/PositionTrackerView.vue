@@ -9,6 +9,33 @@
         Track your liquidity pool positions and monitor their APR performance over time.
       </p>
 
+      <!-- Global Stats -->
+      <div v-if="positions.length > 0" class="bg-gray-700 p-4 rounded-lg border border-gray-600 mb-6">
+        <h3 class="text-xl font-semibold text-gray-200 mb-4 text-center">Global Performance</h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-center">
+          <div class="bg-gray-800 p-3 rounded">
+            <div class="text-gray-400">Currently Invested</div>
+            <div class="text-green-400 font-semibold">${{ globalStats.currentlyInvested.toFixed(2) }}</div>
+          </div>
+          <div class="bg-gray-800 p-3 rounded">
+            <div class="text-gray-400">Total Fees</div>
+            <div class="text-green-400 font-semibold">${{ globalStats.totalFees.toFixed(2) }}</div>
+          </div>
+          <div class="bg-gray-800 p-3 rounded">
+            <div class="text-gray-400">Total Return</div>
+            <div class="text-green-400 font-semibold">{{ globalStats.totalReturn.toFixed(2) }}%</div>
+          </div>
+          <div class="bg-gray-800 p-3 rounded">
+            <div class="text-gray-400">Avg. APR</div>
+            <div class="text-blue-400 font-semibold">{{ globalStats.averageApr.toFixed(2) }}%</div>
+          </div>
+          <div class="bg-gray-800 p-3 rounded">
+            <div class="text-gray-400">Avg. Days Active</div>
+            <div class="text-blue-400 font-semibold">{{ globalStats.averageDaysActive.toFixed(2) }}</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Header Actions -->
       <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex flex-wrap gap-2">
@@ -113,7 +140,7 @@
                     <!-- Fee Entry Notification -->
                     <div v-if="needsFeeEntryForToday(position)" title="Fee entry for today is pending"
                       class="flex items-center">
-                      <svg class="w-5 h-5 text-yellow-400 animate-pulse" fill="none" stroke="currentColor"
+                      <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -578,6 +605,25 @@ const needsFeeEntryForToday = (position: Position): boolean => {
   return lastFeeEntryDate.getTime() < today.getTime();
 };
 
+const getPositionAPRNumeric = (position: Position): number => {
+  if (position.feeEntries.length === 0) return 0;
+
+  const endDate = position.status === 'closed' && position.closingDate
+    ? position.closingDate
+    : position.feeEntries.length > 0
+      ? position.feeEntries[position.feeEntries.length - 1].datetime
+      : new Date().toISOString();
+
+  const results = calculateAPR({
+    initialAmount: position.initialAmount,
+    totalFees: getTotalFees(position),
+    startDate: position.openingDate,
+    endDate: endDate
+  });
+
+  return results.apr;
+};
+
 // Calculation functions
 const getTotalFees = (position: Position): number => {
   return position.feeEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -643,6 +689,45 @@ const closedPositions = computed(() => {
   return positions.value
     .filter(p => p.status === 'closed')
     .sort((a, b) => new Date(b.closingDate || b.createdAt).getTime() - new Date(a.closingDate || a.createdAt).getTime());
+});
+
+// Computed properties for global stats
+const globalStats = computed(() => {
+  const allPositions = positions.value;
+  if (allPositions.length === 0) {
+    return {
+      totalFees: 0,
+      totalReturn: 0,
+      averageDaysActive: 0,
+      currentlyInvested: 0,
+      averageApr: 0,
+    };
+  }
+
+  const activePositionsOnly = allPositions.filter(p => p.status === 'active');
+  const closedPositionsOnly = allPositions.filter(p => p.status === 'closed');
+
+  const currentlyInvested = activePositionsOnly.reduce((sum, p) => sum + p.initialAmount, 0);
+  const totalInvestmentInClosed = closedPositionsOnly.reduce((sum, p) => sum + p.initialAmount, 0);
+
+  const totalFees = allPositions.reduce((sum, p) => sum + getTotalFees(p), 0);
+  const totalDaysActive = allPositions.reduce((sum, p) => sum + getDaysActive(p), 0);
+  const totalApr = allPositions.reduce((sum, p) => sum + getPositionAPRNumeric(p), 0);
+
+  const averageDaysActive = allPositions.length > 0 ? totalDaysActive / allPositions.length : 0;
+
+  const returnDenominator = currentlyInvested > 0 ? currentlyInvested : totalInvestmentInClosed;
+  const totalReturn = returnDenominator > 0 ? (totalFees / returnDenominator) * 100 : 0;
+
+  const averageApr = allPositions.length > 0 ? totalApr / allPositions.length : 0;
+
+  return {
+    totalFees,
+    totalReturn,
+    averageDaysActive,
+    currentlyInvested,
+    averageApr,
+  };
 });
 
 // Lifecycle
