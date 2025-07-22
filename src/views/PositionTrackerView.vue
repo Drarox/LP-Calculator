@@ -109,6 +109,16 @@
                   <div class="flex items-center gap-2 mb-1">
                     <h3 class="text-lg font-semibold text-gray-200">{{ position.name }}</h3>
                     <span class="px-2 py-1 bg-green-600 text-green-100 text-xs rounded-full">Active</span>
+
+                    <!-- Fee Entry Notification -->
+                    <div v-if="needsFeeEntryForToday(position)" title="Fee entry for today is pending"
+                      class="flex items-center">
+                      <svg class="w-5 h-5 text-yellow-400 animate-pulse" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
                   </div>
                   <p class="text-sm text-gray-400">Initial: ${{ position.initialAmount.toFixed(2) }} • Opened: {{
                     formatDate(position.openingDate) }}</p>
@@ -544,6 +554,29 @@ const openExternalLink = (url: string) => {
 };
 
 const formatDate = formatDateTime;
+
+const needsFeeEntryForToday = (position: Position): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const openingDate = new Date(position.openingDate);
+  openingDate.setHours(0, 0, 0, 0);
+
+  // Don't show for positions created today
+  if (openingDate.getTime() >= today.getTime()) {
+    return false;
+  }
+
+  if (position.feeEntries.length === 0) {
+    return true; // Needs an entry if not opened today and has no entries
+  }
+
+  const lastFeeEntryDate = new Date(position.feeEntries[position.feeEntries.length - 1].datetime);
+  lastFeeEntryDate.setHours(0, 0, 0, 0);
+
+  // Return true if the last fee entry was before today
+  return lastFeeEntryDate.getTime() < today.getTime();
+};
 
 // Calculation functions
 const getTotalFees = (position: Position): number => {
