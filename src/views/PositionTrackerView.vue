@@ -131,15 +131,15 @@
 
             <!-- Position Header -->
             <div class="p-4">
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h3 class="text-lg font-semibold text-gray-200">{{ position.name }}</h3>
-                    <span class="px-2 py-1 bg-green-600 text-green-100 text-xs rounded-full">Active</span>
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 class="text-lg font-semibold text-gray-200 truncate">{{ position.name }}</h3>
+                    <span class="px-2 py-1 bg-green-600 text-green-100 text-xs rounded-full flex-shrink-0">Active</span>
 
                     <!-- Fee Entry Notification -->
                     <div v-if="needsFeeEntryForToday(position)" title="Fee entry for today is pending"
-                      class="flex items-center">
+                      class="flex items-center flex-shrink-0">
                       <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -151,15 +151,15 @@
                     formatDate(position.openingDate) }}</p>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
                   <!-- APR Stats -->
-                  <div class="text-right mr-4">
+                  <div class="text-left sm:text-right">
                     <div class="text-lg font-bold text-blue-400">{{ getPositionAPR(position) }}%</div>
                     <div class="text-xs text-gray-400">Current APR</div>
                   </div>
 
                   <!-- Action Buttons with Icons -->
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-1 flex-shrink-0">
 
                     <!-- Delete Button -->
                     <button @click="deletePosition(position.id)" title="Delete Position"
@@ -299,11 +299,11 @@
 
             <!-- Position Header -->
             <div class="p-4">
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <h3 class="text-lg font-semibold text-gray-200">{{ position.name }}</h3>
-                    <span class="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded-full">Closed</span>
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 class="text-lg font-semibold text-gray-200 truncate">{{ position.name }}</h3>
+                    <span class="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded-full flex-shrink-0">Closed</span>
                   </div>
                   <p class="text-sm text-gray-400">
                     Initial: ${{ position.initialAmount.toFixed(2) }} •
@@ -311,15 +311,15 @@
                   </p>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
                   <!-- Final APR Stats -->
-                  <div class="text-right mr-4">
+                  <div class="text-left sm:text-right">
                     <div class="text-lg font-bold text-gray-400">{{ getPositionAPR(position) }}%</div>
                     <div class="text-xs text-gray-400">Final APR</div>
                   </div>
 
                   <!-- Action Buttons -->
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-1 flex-shrink-0">
                     <!-- External Link Button -->
                     <button v-if="position.externalLink" @click="openExternalLink(position.externalLink)"
                       title="Open External Link"
