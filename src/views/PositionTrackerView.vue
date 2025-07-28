@@ -11,7 +11,18 @@
 
       <!-- Global Stats -->
       <div v-if="positions.length > 0" class="bg-gray-700 p-4 rounded-lg border border-gray-600 mb-6">
-        <h3 class="text-xl font-semibold text-gray-200 mb-4 text-center">Global Performance</h3>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+          <h3 class="text-xl font-semibold text-gray-200 mb-2 sm:mb-0">Global Performance</h3>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-300">Filter:</label>
+            <select v-model="globalStatsFilter"
+              class="px-3 py-1 border border-gray-600 rounded-md bg-gray-800 text-gray-100 text-sm focus:ring-blue-500 focus:border-blue-500">
+              <option value="all">All Pairs</option>
+              <option value="stable">Stable Only</option>
+              <option value="volatile">Volatile Only</option>
+            </select>
+          </div>
+        </div>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-center">
           <div class="bg-gray-800 p-3 rounded">
             <div class="text-gray-400">Currently Invested</div>
@@ -73,7 +84,7 @@
       <div v-if="showAddForm" class="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-6">
         <h3 class="text-xl font-semibold text-gray-200 mb-4">Add New LP Position</h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Position Name</label>
             <input type="text" v-model="newPosition.name" placeholder="e.g. USDC/USDT on Uniswap"
@@ -84,6 +95,15 @@
             <label class="block text-sm font-medium text-gray-300 mb-1">Initial Investment ($)</label>
             <input type="number" v-model.number="newPosition.initialAmount" step="any"
               class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Pair Type</label>
+            <select v-model="newPosition.pairType"
+              class="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-100 focus:ring-blue-500 focus:border-blue-500">
+              <option value="stable">Stable</option>
+              <option value="volatile">Volatile</option>
+            </select>
           </div>
         </div>
 
@@ -135,6 +155,10 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 class="text-lg font-semibold text-gray-200 truncate">{{ position.name }}</h3>
+                    <span :class="[
+                      'px-2 py-1 text-xs rounded-full flex-shrink-0',
+                      position.pairType === 'stable' ? 'bg-blue-600 text-blue-100' : 'bg-yellow-600 text-yellow-100'
+                    ]">{{ position.pairType === 'stable' ? 'Stable' : 'Volatile' }}</span>
                     <span class="px-2 py-1 bg-green-600 text-green-100 text-xs rounded-full flex-shrink-0">Active</span>
 
                     <!-- Fee Entry Notification -->
@@ -303,6 +327,10 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 class="text-lg font-semibold text-gray-200 truncate">{{ position.name }}</h3>
+                    <span :class="[
+                      'px-2 py-1 text-xs rounded-full flex-shrink-0',
+                      position.pairType === 'stable' ? 'bg-blue-600 text-blue-100' : 'bg-yellow-600 text-yellow-100'
+                    ]">{{ position.pairType === 'stable' ? 'Stable' : 'Volatile' }}</span>
                     <span class="px-2 py-1 bg-gray-600 text-gray-300 text-xs rounded-full flex-shrink-0">Closed</span>
                   </div>
                   <p class="text-sm text-gray-400">
@@ -432,6 +460,7 @@ interface Position {
   id: string;
   name: string;
   initialAmount: number;
+  pairType: 'stable' | 'volatile';
   externalLink?: string;
   createdAt: string;
   openingDate: string;
@@ -446,10 +475,12 @@ const showAddForm = ref(false);
 const expandedPositions = ref(new Set<string>());
 const newFeeEntry = reactive<Record<string, { amount: number | null; datetime: string }>>({});
 const fileInput = ref<HTMLInputElement>();
+const globalStatsFilter = ref<'all' | 'stable' | 'volatile'>('all');
 
 const newPosition = reactive({
   name: '',
   initialAmount: null as number | null,
+  pairType: 'stable' as 'stable' | 'volatile',
   externalLink: '',
   openingDate: getLocalDateTimeString()
 });
@@ -487,6 +518,7 @@ const addPosition = () => {
     id: Date.now().toString(),
     name: newPosition.name,
     initialAmount: newPosition.initialAmount,
+    pairType: newPosition.pairType,
     externalLink: newPosition.externalLink || undefined,
     createdAt: new Date().toISOString(),
     openingDate: newPosition.openingDate,
@@ -535,6 +567,7 @@ const cancelAddForm = () => {
   showAddForm.value = false;
   newPosition.name = '';
   newPosition.initialAmount = null;
+  newPosition.pairType = 'stable';
   newPosition.externalLink = '';
   newPosition.openingDate = getLocalDateTimeString();
 };
@@ -693,7 +726,13 @@ const closedPositions = computed(() => {
 
 // Computed properties for global stats
 const globalStats = computed(() => {
-  const allPositions = positions.value;
+  let allPositions = positions.value;
+  
+  // Apply filter based on pair type
+  if (globalStatsFilter.value !== 'all') {
+    allPositions = allPositions.filter(p => p.pairType === globalStatsFilter.value);
+  }
+  
   if (allPositions.length === 0) {
     return {
       totalFees: 0,
@@ -733,10 +772,17 @@ const globalStats = computed(() => {
 // Lifecycle
 onMounted(() => {
   positions.value = loadPositions();
-  // Initialize fee entries for all positions
+  
+  // Migration: Add pairType to existing positions that don't have it
   positions.value.forEach(position => {
+    if (!position.pairType) {
+      position.pairType = 'stable'; // Default to stable for existing positions
+    }
     initializeFeeEntry(position.id);
   });
+  
+  // Save positions after migration
+  savePositions();
 });
 
 // Export/Import functions
